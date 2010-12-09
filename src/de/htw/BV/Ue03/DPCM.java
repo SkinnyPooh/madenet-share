@@ -40,6 +40,16 @@ public class DPCM {
 	}
 
 	public void generateFailures(){
-		
+		int[] failure = new int[orig.getPixels().length];
+	}
+	
+	private void showFailures(int[] failure){
+		int[] pixFehler = fehler.getPixels();
+		for(int i = 0; i < pixFehler.length; i++) pixFehler[i] = failure[i]+128;
+		fehler.applyChanges();
+	}
+	
+	private void recon(int[] failure){
+		recon.applyChanges();
 	}
 }
