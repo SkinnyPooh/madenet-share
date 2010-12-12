@@ -45,7 +45,13 @@ public class DPCM {
 	
 	private void showFailures(int[] failure){
 		int[] pixFehler = fehler.getPixels();
-		for(int i = 0; i < pixFehler.length; i++) pixFehler[i] = failure[i]+128;
+		int pix;
+		for(int i = 0; i < pixFehler.length; i++){
+			pix = failure[i] + 128;
+			if(pix < 0)pix = 0;
+			if(pix > 255) pix = 255;
+			pixFehler[i] = 0xFF000000 + ((pix & 0xff) << 16) + ((pix & 0xff) << 8) + (pix & 0xff);
+		}
 		fehler.applyChanges();
 	}
 	
