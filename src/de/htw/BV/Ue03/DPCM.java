@@ -39,7 +39,7 @@ public class DPCM {
 		quant = q;
 	}
 	
-	public void setModde(byte m){
+	public void setMode(byte m){
 		if(m < 0 || m > 6){
 			mode = 1;
 		}
@@ -50,7 +50,7 @@ public class DPCM {
 
 	public void generateFailures(){
     	int[] failure = new int[orig.getPixels().length];
-    	byte[] reconBytes = new byte[orig.getPixels().length];
+    	int[] reconPix = new int[orig.getPixels().length];
     	int[] origPix = orig.getPixels();
 		int pos = 0;
 		int s2 = 128;
@@ -58,23 +58,36 @@ public class DPCM {
 		for(int y = 0; y < height; y++){
 			for(int x = 0; x < width; x++, pos++){
 				switch(mode){
-					case 1: s2 = x==0 ? 128 : reconBytes[pos];
+					case 1: 
+						s2 = x==0 ? 128 : reconPix[pos-1];
 					break;
-					case 2: s2 = y==0 ? 128 : reconBytes[pos-width];
+					case 2: 
+						s2 = y==0 ? 128 : reconPix[pos-width];
 					break;
-					case 3: s2 = x==0 || y==0 ? 128 : reconBytes[pos-width-1];
+					case 3: 
+						s2 = x==0 || y==0 ? 128 : reconPix[pos-width-1];
 					break;
-					case 4: s2 = x==0 || y==0 ? 128 : reconBytes[pos] + reconBytes[pos-width] - reconBytes[pos-width-1];
+					case 4: 
+						s2 = x==0 || y==0 ? 128 : reconPix[pos-1] + reconPix[pos-width] - reconPix[pos-width-1];
 					break;
-					case 5: s2 = x==0 || y==0 ? 128 : (reconBytes[pos] + reconBytes[pos-width]) /2;
+					case 5: 
+						s2 = x==0 || y==0 ? 128 : (reconPix[pos-1] + reconPix[pos-width]) /2;
 					break;
-					case 6: s2 = reconBytes[pos] - reconBytes[pos-width-1] < reconBytes[pos-width] - reconBytes[pos-width-1] ? reconBytes[pos-width] : reconBytes[pos];
+					case 6: 
+						if(x == 0 || y == 0){
+							s2 = 128;
+						}
+						else {
+							s2 = Math.abs(reconPix[pos-1] - reconPix[pos-width-1]) < Math.abs(reconPix[pos-width] - reconPix[pos-width-1]) ? reconPix[pos-width] : reconPix[pos-1];
+						}
 					break;
 				}
-				error = s2 - (origPix[pos] & 0xFF);
-				error = (int) (error/ quant + 0.5);
+				error = (origPix[pos] & 0xFF) - s2;
+				error = error > 0 ? (int)(error/quant + 0.5) : (int)(error/quant - 0.5);
 				failure[pos] = error;
-				reconBytes[pos] += s2 + error * quant;
+				reconPix[pos] = error > 0 ? (int) (s2 + error * quant +0.5) : (int) (s2 + error * quant -0.5);
+				if(reconPix[pos] <   0)reconPix[pos] =   0;
+				if(reconPix[pos] > 255)reconPix[pos] = 255;
 			}
 		}
 		showFailures(failure);
@@ -95,26 +108,36 @@ public class DPCM {
 	
 	public void recon(int[] failure){
 	    int[] reconPix = recon.getPixels();
-	    byte[] reconBytes = new byte[reconPix.length];
 		int pos = 0;
 		int s2 = 128;
 		for(int y = 0; y < height; y++){
 			for(int x = 0; x < width; x++, pos++){
 				switch(mode){
-					case 1: s2 = x == 0 ? 128 : reconBytes[pos];
+					case 1: 
+						s2 = x == 0 ? 128 : reconPix[pos-1] & 0xFF;
 					break;
-					case 2: s2 = y == 0 ? 128 : reconBytes[pos-width-1];
+					case 2: 
+						s2 = y == 0 ? 128 : reconPix[pos-width] & 0xFF;
 					break;
-					case 3: s2 = x == 0 || y == 0 ? 128 : reconBytes[pos-width-1];
+					case 3: 
+						s2 = x == 0 || y == 0 ? 128 : reconPix[pos-width-1] & 0xFF;
 					break;
-					case 4: s2 = x == 0 || y == 0 ? 128 : reconBytes[pos] + reconBytes[pos-width] - reconBytes[pos-width-1];
+					case 4: 
+						s2 = x == 0 || y == 0 ? 128 : (reconPix[pos-1] & 0xFF) + (reconPix[pos-width] & 0xFF) - (reconPix[pos-width-1] & 0xFF);
 					break;
-					case 5: s2 = x == 0 || y == 0 ? 128 : (reconBytes[pos] + reconBytes[pos-width]) /2;
+					case 5: 
+						s2 = x == 0 || y == 0 ? 128 : ((reconPix[pos-1] & 0xFF) + (reconPix[pos-width] & 0xFF)) /2;
 					break;
-					case 6: s2 = reconBytes[pos] - reconBytes[pos-width-1] < reconBytes[pos-width] - reconBytes[pos-width-1] ? reconBytes[pos-width] : reconBytes[pos];
+					case 6: 
+						if(x == 0 || y == 0){
+							s2 = 128;
+						}
+						else {
+							s2 = Math.abs((reconPix[pos-1] & 0xFF) - (reconPix[pos-width-1] & 0xFF)) < Math.abs((reconPix[pos-width] & 0xFF) - (reconPix[pos-width-1] & 0xFF)) ? (reconPix[pos-width] & 0xFF) : (reconPix[pos-1] & 0xFF);
+						}
 					break;
 				}
-				int pix = (int) (s2 + failure[pos]*quant);
+				int pix = failure[pos] > 0 ? (int) (s2 + failure[pos] * quant +0.5) : (int) (s2 + failure[pos] * quant -0.5);
 				if(pix < 0)pix = 0;
 				if(pix > 255)pix = 255;
 				reconPix[pos] = 0xFF000000 + ((pix & 0xff) << 16) + ((pix & 0xff) << 8) + (pix & 0xff);
