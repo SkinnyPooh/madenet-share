@@ -1,17 +1,21 @@
 package de.htw.BV.Ue03;
 import java.io.File;
+import java.awt.Image;
+
 
 /**
  * 
  */
 
 /**
- * @author Marten SchÃ¤licke
+ * @author Marten Schälicke
  * @version 1.0
  */
 public class ExtendedView extends ImageView {
 	
 	private double[] histo = new double[256];
+	
+	
 
     public ExtendedView(File file) {
 	    super(file);
@@ -23,6 +27,7 @@ public class ExtendedView extends ImageView {
     
     public void convertToGray() {
     	int[] pixels = getPixels();
+    	
     	
     	for (int pos = 0; pos < pixels.length; pos++) {
 
@@ -36,7 +41,7 @@ public class ExtendedView extends ImageView {
     	
 			double Y =  (0.299 * r + 0.587 * g + 0.114 * b + 0.5);
 
-			// Rücktransformation von YCbCr nach RGB
+			// R�cktransformation von YCbCr nach RGB
 			r = (int) Y;
 			g = (int) Y;
 			b = (int) Y;
@@ -46,15 +51,40 @@ public class ExtendedView extends ImageView {
     	applyChanges();
     }
     
-    private double getEntropie(){
+    
+ /*   public void getScaledImage() {
+    	Image scaled = image.getScaledInstance(
+    		(image.getWidth() * percent) / 100, (image.getHeight() * percent) / 100,
+    		    Image.SCALE_SMOOTH );
+    		 
+    } */
+    
+    
+    public double getEntropie(){
+    	updateHistogram();
         double entropie = 0;
         for(int i = 0; i < histo.length; i++){
-            if(histo[i] != 0)entropie += histo[i] * 
-            (Math.log10(histo[i])/Math.log10(2));
+            if(histo[i] != 0)entropie += histo[i] * (Math.log10(histo[i])/Math.log10(2));
         }
         return -entropie;
     }
     
+	private void updateHistogram() {
+		for(int i = 0; i < histo.length; i++){
+			histo[i] = 0;
+		}
+		for(int i = 0; i < pixels.length; i++){
+			int r = (pixels[i] & 0xff0000) >> 16;
+			int g = (pixels[i] & 0x00ff00) >> 8;
+			int b = (pixels[i] & 0x0000ff);
+			int luminanz =  (int) (0.299 * r + 0.587 * g + 0.114 * b + 0.5);
+			histo[luminanz] += 1;
+		}
+		for(int i = 0; i < histo.length; i++){
+			histo[i] /= pixels.length;
+		}
+	}
+   
     private void drawHistogramm() {
         int pixels[] = getPixels();
 
