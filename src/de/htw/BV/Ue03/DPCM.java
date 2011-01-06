@@ -4,7 +4,7 @@ package de.htw.BV.Ue03;
  */
 
 /**
- * @author Marten Schälicke
+ * @author Marten Sch�licke
  * @version 1.0
  */
 public class DPCM {
@@ -13,7 +13,7 @@ public class DPCM {
 	private ExtendedView recon;
 	private double quant;
 	/**
-	 * used to manage the mode of the prädiktor:<br/>
+	 * used to manage the mode of the pr�diktor:<br/>
 	 * 1 - P = A<br/>
 	 * 2 - P = B<br/>
 	 * 3 - P = C<br/>
@@ -83,9 +83,9 @@ public class DPCM {
 					break;
 				}
 				error = (origPix[pos] & 0xFF) - s2;
-				error = error > 0 ? (int)(error/quant + 0.5) : (int)(error/quant - 0.5);
+				error = error >= 0 ? (int)(error/quant + 0.5) : (int)(error/quant - 0.5);
 				failure[pos] = error;
-				reconPix[pos] = error > 0 ? (int) (s2 + error * quant +0.5) : (int) (s2 + error * quant -0.5);
+				reconPix[pos] = error >= 0 ? s2 + (int)(error * quant +0.5) : s2 + (int)(error * quant -0.5);
 				if(reconPix[pos] <   0)reconPix[pos] =   0;
 				if(reconPix[pos] > 255)reconPix[pos] = 255;
 			}
@@ -137,12 +137,21 @@ public class DPCM {
 						}
 					break;
 				}
-				int pix = failure[pos] > 0 ? (int) (s2 + failure[pos] * quant +0.5) : (int) (s2 + failure[pos] * quant -0.5);
+				int pix = failure[pos] >= 0 ?  s2 + (int) (failure[pos] * quant +0.5) : s2 + (int)(failure[pos] * quant -0.5);
 				if(pix < 0)pix = 0;
 				if(pix > 255)pix = 255;
-				reconPix[pos] = 0xFF000000 + ((pix & 0xff) << 16) + ((pix & 0xff) << 8) + (pix & 0xff);
+				reconPix[pos] = 0xFF000000 + (pix << 16) + (pix << 8) + pix;
 			}
 		}
 		recon.applyChanges();
 	}
+	
+	public ExtendedView getFehler () {
+		return fehler;
+	}
+	public ExtendedView getRecon () {
+		return recon;
+	}
+	
+	
 }
