@@ -19,10 +19,12 @@ public class Wavelet {
 	}
 	
 	public void calcPic(int kaskaden){
+		if(kaskaden < 1 || kaskaden > 5) kaskaden = 1;
 		copyPixels();
 		int width = orig.getImgWidth();
 		int height = orig.getImgHeight();
 		pic = calcKaskade(pic.clone(), width, height, kaskaden);
+		showPic(width, height, kaskaden);
 	}
 	
     private double[] calcKaskade(double[] dA, final int width, final int height, final int kaskaden) {
@@ -101,10 +103,59 @@ public class Wavelet {
 	    }
     }
 
-	public void showPic(){
-		
+	private void showPic(final int width, final int height, final int kaskaden){
+		double[] pixelDoubles = generatePixels(pic, width, height, kaskaden);
+		int[] pixelInts = copyDPixToIPix(pixelDoubles);
+		fehler.setPixels(pixelInts);
 	}
-	
+
+	private double[] generatePixels(final double[] dA, final int width, final int height, final int kaskaden) {
+    	for(int i = 0; i < dA.length; i++){
+    		dA[i] /= 4;
+    	}
+    	double[] ll = getLL(dA, width, height);
+	    if(kaskaden > 0){
+	    	ll = generatePixels(ll, width/2, height/2, kaskaden-1);
+	    }
+	    int pos = 0;
+	    int posLL = 0;
+	    for(int y = 0; y < height; y++){
+	    	for(int x = 0; x < width; x++, pos++){
+	    		if(x < width/2 && y < height/2){
+	    			dA[pos] = ll[posLL];
+	    			posLL++;
+	    		}
+	    		else{
+	    			dA[pos] += 128;
+	    		}
+	    	}
+	    }
+	    return dA;
+    }
+
+    private double[] getLL(double[] dA, int width, int height) {
+	    double[] ll = new double[width * height / 4];
+	    int pos = 0;
+	    int posLL = 0;
+	    for(int y = 0; y<height/2; y++){
+	    	for(int x = 0; x<width/2; x++, pos++, posLL++){
+	    		ll[posLL] = dA[pos];
+	    	}
+	    	pos += width/2;
+	    }
+	    return ll;
+    }
+
+    private int[] copyDPixToIPix(double[] pixelDoubles) {
+	    int[] pixels = new int[pixelDoubles.length];
+	    for(int i = 0; i < pixels.length; i++){
+	    	if(pixelDoubles[i] < 0)pixels[i] = 0;
+	    	if(pixelDoubles[i] > 255)pixels[i] = 255;
+	    	else pixels[i] = (int) (pixelDoubles[i] + 0.5);
+	    }
+	    return pixels;
+    }
+
 	//Hochpass Horizontal usw.
 	private double[] hPH(double[] ausgangswerte, int widht, int height){
 		return null;
