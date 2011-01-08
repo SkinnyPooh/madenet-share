@@ -2,24 +2,24 @@ package de.htw.BV.Ue04;
 
 
 import java.awt.BorderLayout;
-import java.awt.Choice;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.File;
 
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
-
-import javax.swing.*;
 
 /**
  * 
@@ -29,6 +29,7 @@ import javax.swing.*;
  * @author Marten SchÃ¤licke
  * @version 1.0
  */
+@SuppressWarnings("serial")
 public class WaveletMain extends JFrame {
 
 	private ExtendedView orig;
@@ -102,29 +103,12 @@ public class WaveletMain extends JFrame {
 					
 		});
 
-		final JLabel sliderQ = new JLabel("1.0");
-		final JSlider slideQuant = new JSlider(10, 1000, 10);
-		JLabel quant = new JLabel(" Auflösungsstufe:");
-		slideQuant.addChangeListener(new ChangeListener() {
-
-			public void stateChanged(ChangeEvent arg0) {
-				sliderQ.setText("" + (double) slideQuant.getValue() / 10.);
-				if (wave != null) {
-					wave.setQuant((double) slideQuant.getValue() / 10.);
-					getAllImages();
-					updateText();
-				}
-			}
-		});
 		
 		
 		toolPanel.add(load);
 		toolPanel.add(kaskade);
 		toolPanel.add(slideKaskade);
 		toolPanel.add(sliderK);
-		toolPanel.add(quant);
-		toolPanel.add(slideQuant);
-		toolPanel.add(sliderQ);
 		
 		
 		
@@ -167,13 +151,10 @@ public class WaveletMain extends JFrame {
 	}
 
 	private void getAllImages() {
-
 		orig.convertToGray();
-		orig.setMaxSize(new Dimension(maxImageWidth, maxImageHeight));
-		wave.generateFailures();
-		fehler = wave.getFehler();
-		recon = wave.getRecon();		
+		orig.setMaxSize(new Dimension(maxImageWidth, maxImageHeight));	
 	}
+	
 	private double getMSE() {
 		int origpixels[] = orig.getPixels();
 		int reconpixels[] = recon.getPixels();
