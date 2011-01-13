@@ -10,6 +10,10 @@ public class Wavelet {
 	private ExtendedView fehler;
 	private ExtendedView recon;
 	private double[] pic;
+	private final static int[] ANALYSE_TIEFPASS = {-1,2,6,2-1};
+	private final static int[] ANALYSE_HOCHPASS = {-1,2,-1};
+	private final static int[] SYNTHESE_HOCHPASS = {-1,2,6,2-1};
+	private final static int[] SYNTHESE_TIEFPASS = {-1,2,6,2-1};
 	
 	public Wavelet(ExtendedView orig, ExtendedView fehler, ExtendedView recon){
 		this.orig = orig;
@@ -32,16 +36,16 @@ public class Wavelet {
 	    double[] lh;
 	    double[] hl = dA.clone();
 	    double[] hh;
-	    ll = lPH(ll, width, height);
-	    hl = hPH(hl, width, height);
+	    ll = filterHorizontal(ll, width, height, ANALYSE_TIEFPASS);
+	    hl = filterHorizontal(hl, width, height, ANALYSE_HOCHPASS);
 	    ll = throwAwayEvery2nd(ll, 0);
 	    hl = throwAwayEvery2nd(hl, 1);
 	    lh = ll.clone();
 	    hh = hl.clone();
-	    ll = lPV(ll, width/2, height);
-	    lh = hPV(lh, width/2, height);
-	    hl = lPV(hl, width/2, height);
-	    hh = hPV(hh, width/2, height);
+	    ll = filterVertikal(ll, width/2, height, ANALYSE_TIEFPASS);
+	    lh = filterVertikal(lh, width/2, height, ANALYSE_HOCHPASS);
+	    hl = filterVertikal(hl, width/2, height, ANALYSE_TIEFPASS);
+	    hh = filterVertikal(hh, width/2, height, ANALYSE_HOCHPASS);
 	    ll = throwAwayEvery2nd(ll, 0);
 	    lh = throwAwayEvery2nd(lh, 1);
 	    hl = throwAwayEvery2nd(hl, 0);
@@ -56,8 +60,8 @@ public class Wavelet {
     private double[] mergeBands(double[] ll, double[] lh, double[] hl, double[] hh, int width, int height) {
 	    double[] dA = new double[width * height];
 	    int[] pos = {0, 0, 0, 0, 0};
-	    for(int y = 0; y < width; y++){
-	    	for(int x = 0; x < height; x++, pos[0]++){
+	    for(int y = 0; y < height; y++){
+	    	for(int x = 0; x < width; x++, pos[0]++){
 	    		if(y < height/2){
 	    			if(x < width /2){
 	    				dA[pos[0]] = ll[pos[1]];
@@ -149,27 +153,86 @@ public class Wavelet {
     private int[] copyDPixToIPix(double[] pixelDoubles) {
 	    int[] pixels = new int[pixelDoubles.length];
 	    for(int i = 0; i < pixels.length; i++){
-	    	if(pixelDoubles[i] < 0)pixels[i] = 0;
-	    	if(pixelDoubles[i] > 255)pixels[i] = 255;
-	    	else pixels[i] = (int) (pixelDoubles[i] + 0.5);
+	    	int wert;
+	    	if(pixelDoubles[i] < 0)wert = 0;
+	    	if(pixelDoubles[i] > 255)wert = 255;
+	    	else wert = (int) (pixelDoubles[i] + 0.5);
+	    	pixels[i] = (wert << 16) | (wert << 8) | wert;
 	    }
 	    return pixels;
     }
 
-	//Hochpass Horizontal usw.
-	private double[] hPH(double[] ausgangswerte, int widht, int height){
-		return null;
+    private double[] filterHorizontal(double[] ausgangswerte, int width, int height, int[] kernel) {
+
+		double[] resultat = new double[ausgangswerte.length];
+		int pos = 0;
+
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++, pos++) {
+
+				double sum = 0;
+
+				for (int nx = -kernel.length / 2; nx < kernel.length / 2; nx++) {
+					if (x + nx < 0) {
+
+						sum += ausgangswerte[width * y - nx - x] * kernel[nx + kernel.length / 2];
+
+						// nachbarwert
+					} else if (x + nx >= width) {
+
+						sum += ausgangswerte[width * y + width - 2 - x - nx
+								+ width]
+								* kernel[nx + kernel.length / 2];
+
+					} else {
+
+						sum += ausgangswerte[pos + nx]
+								* kernel[nx + kernel.length / 2];
+					}
+				}
+
+				resultat[pos] = sum;
+			}
+		}
+
+		return resultat;
 	}
-	
-	private double[] hPV(double[] ausgangswerte, int widht, int height){
-		return null;
+
+	private double[] filterVertikal(double[] ausgangswerte, int width,	int height, int[] kernel) {
+
+		double[] resultat = new double[ausgangswerte.length];
+		int pos = 0;
+
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
+
+				double sum = 0;
+
+				pos = width * y + x;
+
+				for (int ny = -kernel.length / 2; ny < kernel.length / 2; ny++) {
+					if (y + ny < 0) {
+
+						sum += ausgangswerte[x - ny - y]* kernel[ny + kernel.length / 2];
+
+						// nachbarwert
+					} else if (y + ny >= height) {
+
+						sum += ausgangswerte[x + height - 2 - y - ny + height]* kernel[ny + kernel.length / 2];
+
+					} else {
+
+						sum += ausgangswerte[pos + ny]
+								* kernel[ny + kernel.length / 2];
+					}
+				}
+
+				resultat[pos] = sum;
+			}
+		}
+
+		return resultat;
+
 	}
-	
-	private double[] lPH(double[] ausgangswerte, int widht, int height){
-		return null;
-	}
-	
-	private double[] lPV(double[] ausgangswerte, int widht, int height){
-		return null;
-	}
+    
 }

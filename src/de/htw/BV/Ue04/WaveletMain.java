@@ -89,15 +89,14 @@ public class WaveletMain extends JFrame {
 
 		});
 		
-		final JLabel sliderK = new JLabel("0");
-		final JSlider slideKaskade = new JSlider(0, 5, 0);
+		final JLabel sliderK = new JLabel("1");
+		final JSlider slideKaskade = new JSlider(1, 5, 1);
 		JLabel kaskade = new JLabel(" Kaskaden:");
 		slideKaskade.addChangeListener(new ChangeListener() {
 
 			public void stateChanged(ChangeEvent arg0) {
 				sliderK.setText("" + slideKaskade.getValue());
-				
-				
+				wave.calcPic(slideKaskade.getValue());
 			}
 			
 					
