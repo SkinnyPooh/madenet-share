@@ -75,6 +75,9 @@ public class WaveletMain extends JFrame {
 		if (!input.canRead())
 			input = openFile(); // file not found, choose another image
 
+
+		final JLabel sliderK = new JLabel("1");
+		final JSlider slideKaskade = new JSlider(1, 5, 1);
 		JButton load = new JButton("Open Image");
 		load.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -84,19 +87,20 @@ public class WaveletMain extends JFrame {
 					fehler.loadImage(input);
 					recon.loadImage(input);
 					getAllImages();
+					wave = new Wavelet(orig, fehler, recon);
+					wave.calcPic(slideKaskade.getValue());
+					updateText();
 				}
 			}
 
 		});
 		
-		final JLabel sliderK = new JLabel("1");
-		final JSlider slideKaskade = new JSlider(1, 5, 1);
 		JLabel kaskade = new JLabel(" Kaskaden:");
 		slideKaskade.addChangeListener(new ChangeListener() {
-
 			public void stateChanged(ChangeEvent arg0) {
 				sliderK.setText("" + slideKaskade.getValue());
 				wave.calcPic(slideKaskade.getValue());
+				updateText();
 			}
 			
 					
@@ -115,6 +119,7 @@ public class WaveletMain extends JFrame {
 		fehler = new ExtendedView(input);
 	    recon = new ExtendedView(input);
 		wave = new Wavelet(orig, fehler, recon);
+		wave.calcPic(slideKaskade.getValue());
 
 		TitledBorder titleOrig = new TitledBorder(BorderFactory.createEtchedBorder(), "Eingabebild", TitledBorder.LEFT, TitledBorder.DEFAULT_POSITION, new Font("Sans", Font.PLAIN, 11));
 		orig.setBorder(titleOrig);
@@ -152,6 +157,10 @@ public class WaveletMain extends JFrame {
 	private void getAllImages() {
 		orig.convertToGray();
 		orig.setMaxSize(new Dimension(maxImageWidth, maxImageHeight));	
+		fehler.convertToGray();
+		fehler.setMaxSize(new Dimension(maxImageWidth, maxImageHeight));	
+		recon.convertToGray();
+		recon.setMaxSize(new Dimension(maxImageWidth, maxImageHeight));	
 	}
 	
 	private double getMSE() {
@@ -162,7 +171,6 @@ public class WaveletMain extends JFrame {
 		for (int i = 0; i < origpixels.length; i++) {
 			sumOfSquares += ((origpixels[i] & 0xFF) - (reconpixels[i] & 0xFF)) * ((origpixels[i] & 0xFF) - (reconpixels[i] & 0xFF));
 		}
-		System.out.println(sumOfSquares);
 		
 		return sumOfSquares / origpixels.length;
 
